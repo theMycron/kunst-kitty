@@ -189,19 +189,25 @@ find_album_art(){
 			log "$DIR"
 		fi
 
+		# prevent iterating the entire $MUSIC_DIR if mpc experiences an error
+        [ "$DIR" == "$MUSIC_DIR". ] && return 1
+
         log "inspecting $DIR"
+
+		COVER_NAMES='folder|cover|front'
+		COVER_EXT='png|jpg|jpeg'
 
         # Check if there is an album cover/art in the folder.
         # Look at issue #9 for more details
-        for CANDIDATE in "$DIR/"{cover,folder}"."{png,jpg,webp}; do
-			log "Checking candidate $CANDIDATE"
+		while IFS= read -r CANDIDATE ; do
             if [ -f "$CANDIDATE" ]; then
                 STATUS=0
                 ARTLESS=false
                 convert "$CANDIDATE" $COVER &> /dev/null
-                log "found cover.png"
+				log "found $(basename "$CANDIDATE")"
+				break
             fi
-        done
+		done < <(find "$DIR" -type f | grep -i -E -- "($COVER_NAMES).($COVER_EXT)")
     fi
 
     if [ "$STATUS" -ne 0 ];then
