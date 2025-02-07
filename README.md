@@ -1,6 +1,6 @@
 <p align="center"><img src="extra/kunst_logo.png"><br><sub>✨ Download and display album art or display embedded album art  ✨</sub></p>
 
-```kunst``` is a daemon that extracts the album art from the songs playing in ```mpd``` and displays them in the a little window. It doesn't loop on a timer, instead it waits for ```mpd``` to send a ```player``` event. When it receives a ```player``` event, it wakes up and extracts the album art of the current playing track. This makes ```kunst```really lightweight and makes it idle at ```~0%``` CPU usage. If there no embbeded album art, it will try to fetch the album art from the internet.
+```kunst-kitty``` is a daemon that extracts the album art from the songs playing in ```mpd``` and displays them in the kitty terminal. It doesn't loop on a timer, instead it waits for ```mpd``` to send a ```player``` event. When it receives a ```player``` event, it wakes up and extracts the album art of the current playing track. This makes ```kunst-kitty```really lightweight and makes it idle at ```~0%``` CPU usage. If there no embbeded album art, it will try to fetch the album art from the internet.
 
 
 <p align="left">
@@ -9,7 +9,7 @@
 </p>
 
 ## Dependencies
-- ```sxiv```
+- ```kitty```
 - ```bash```
 - ```ffmpeg```
 - ```mpc```
@@ -21,22 +21,14 @@
 ### Install using ```make```
 ```bash
 # Clone the repo
-$ git clone https://github.com/sdushantha/kunst
+$ git clone https://github.com/theMycron/kunst-kitty
 
-# Change your current directory to kunst
-$ cd kunst
+# Change your current directory to kunst-kitty
+$ cd kunst-kitty
 
 # Install it
 $ sudo make install
 ```
-### Install it locally
-
-```bash
-# Download the kunst source code, save as kunst, make it executeable
-# and then move it to ~/.local/bin
-$ curl -L git.io/raw-kunst > kunst && chmod +x kunst && mv kunst ~/.local/bin
-```
-
 ## Usage
 
 ```bash
@@ -66,9 +58,9 @@ You can configure `kunst` through environment variables.
 export KUNST_SIZE="250x250"
 
 # The position where the album art should be displayed
-export KUNST_POSITION="+0+0"
+export KUNST_POSITION="0x0"
 
-# Where your music is located
+# Where your music is located (include a trailing forward slash)
 export KUNST_MUSIC_DIR="/home/username/Music/"
 ```
 
