@@ -176,12 +176,25 @@ find_album_art(){
         log "extracted album art"
         ARTLESS=false
     else
-        DIR="$MUSIC_DIR$(dirname "$(mpc current -f %file%)")"
+		CURRENT=$(mpc current -f %file%)
+
+		DIR="$(dirname "$MUSIC_DIR$CURRENT")"
+		
+		# If playing a cuesheet, dirname will return the cue file
+		# Check if a cue file is playing and call dirname on it again
+		# to get the actual directory
+        if echo "$DIR" | grep -q .cue$; then
+			log "Setting $DIR to:"
+            DIR=$(dirname "$DIR")
+			log "$DIR"
+		fi
+
         log "inspecting $DIR"
 
         # Check if there is an album cover/art in the folder.
         # Look at issue #9 for more details
         for CANDIDATE in "$DIR/"{cover,folder}"."{png,jpg,webp}; do
+			log "Checking candidate $CANDIDATE"
             if [ -f "$CANDIDATE" ]; then
                 STATUS=0
                 ARTLESS=false
@@ -263,7 +276,6 @@ main() {
 
 		# Display the album art in the terminal with kitten icat
 		kitten icat --place "$DISPLAY_SIZE@$POSITION" --scale-up --clear --background black "$COVER"
-		# kitten icat --place "209x58@0x0" --clear --background black "$COVER"
 
         log "swapped album art to $(mpc current)"
 
