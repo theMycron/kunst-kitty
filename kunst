@@ -12,6 +12,7 @@
 VERSION=1.3.4
 TMP=${TMPDIR:-/tmp}
 COVER=$TMP/kunst.jpg
+COVER_TEMP=$TMP/kunst.temp.jpg
 MUSIC_DIR="${KUNST_MUSIC_DIR:-${HOME}/Music/}"
 termsize=$(stty size)
 LINES=${termsize% *}
@@ -149,7 +150,7 @@ get_cover_online() {
         ARTLESS=true
     else
         log "cover found online"
-        curl -o "$COVER" -s "$IMG_URL"
+        curl -o "$COVER_TEMP" -s "$IMG_URL"
         ARTLESS=false
     fi
 
@@ -166,7 +167,7 @@ find_album_art(){
 
     # Extract the album art from the mp3 file and dont show the messsy
     # output of ffmpeg
-    ffmpeg -an -i "$MUSIC_DIR$(mpc current -f %file%)" "$COVER" -y &> /dev/null
+    ffmpeg -an -i "$MUSIC_DIR$(mpc current -f %file%)" "$COVER_TEMP" -y &> /dev/null
 
     # Get the status of the previous command
     STATUS=$?
@@ -203,7 +204,7 @@ find_album_art(){
             if [ -f "$CANDIDATE" ]; then
                 STATUS=0
                 ARTLESS=false
-                convert "$CANDIDATE" $COVER &> /dev/null
+                convert "$CANDIDATE" $COVER_TEMP &> /dev/null
 				log "found $(basename "$CANDIDATE")"
 				break
             fi
@@ -221,7 +222,7 @@ update_cover() {
     find_album_art
 
     if [ "$ARTLESS" == false ] && [ -n "$SIZE" ]; then
-        convert "$COVER" -resize "$SIZE" "$COVER" &> /dev/null
+        convert "$COVER_TEMP" -resize "$SIZE" "$COVER_TEMP" &> /dev/null
         log "resized album art to $SIZE"
     fi
 
@@ -238,6 +239,12 @@ pre_exit() {
     # from kill and we dont want that
     kill -9 "$(cat "$TMP/kunst.pid")" &>/dev/null
 
+}
+
+test_cover_difference() {
+	# Use cmp to find difference
+	cmp -s -n 8192 "$COVER_TEMP" "$COVER" && return 1
+	return 0
 }
 
 main() {
@@ -268,6 +275,8 @@ main() {
         if [ "$FIRST_RUN" == true ]; then
             FIRST_RUN=false
 
+			rm "$COVER"
+
             # Display the album art using nsxiv
             # nsxiv -g "$SIZE$POSITION" -b "$COVER" -N "Kunst" &
 
@@ -276,19 +285,23 @@ main() {
             echo $! >"$TMP/kunst.pid"
         fi
 
-		clear
+		if test_cover_difference ; then
+			mv "$COVER_TEMP" "$COVER"
 
-		set_term_size
+			clear
 
-		# Display the album art in the terminal with kitten icat
-		kitten icat --place "$DISPLAY_SIZE@$POSITION" --scale-up --clear --background black "$COVER"
+			set_term_size
 
-        log "swapped album art to $(mpc current)"
+			# Display the album art in the terminal with kitten icat
+			kitten icat --place "$DISPLAY_SIZE@$POSITION" --scale-up --clear "$COVER"
 
+			log "swapped album art to $(mpc current)"
+
+		fi
         # Waiting for an event from mpd; play/pause/next/previous
         # this is lets kunst use less CPU :)
         while true; do
-            mpc idle player &>/dev/null && (mpc status | grep "\[playing\]" &>/dev/null) && break
+			mpc idle player &>/dev/null && (mpc status %state% | grep "playing" &>/dev/null) && break
         done
         log "received event from mpd"
     done
