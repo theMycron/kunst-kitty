@@ -176,7 +176,7 @@ find_album_art(){
     if [ "$STATUS" -eq 0 ];then
         log "extracted album art"
         ARTLESS=false
-    else
+	elif mpc current | grep -vq "stopped"; then
 		CURRENT=$(mpc current -f %file%)
 
 		DIR="$(dirname "$MUSIC_DIR$CURRENT")"
@@ -275,7 +275,7 @@ main() {
         if [ "$FIRST_RUN" == true ]; then
             FIRST_RUN=false
 
-			rm "$COVER"
+			# rm "$COVER"
 
             # Display the album art using nsxiv
             # nsxiv -g "$SIZE$POSITION" -b "$COVER" -N "Kunst" &
